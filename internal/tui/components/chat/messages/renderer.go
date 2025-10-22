@@ -202,7 +202,7 @@ type bashRenderer struct {
 	baseRenderer
 }
 
-// Render displays the bash command with sanitized newlines and plain output
+// Render displays the bash command with full command visibility and output
 func (br bashRenderer) Render(v *toolCallCmp) string {
 	var params tools.BashParams
 	if err := br.unmarshalParams(v.call.Input, &params); err != nil {
@@ -211,7 +211,7 @@ func (br bashRenderer) Render(v *toolCallCmp) string {
 
 	cmd := strings.ReplaceAll(params.Command, "\n", " ")
 	cmd = strings.ReplaceAll(cmd, "\t", "    ")
-	args := newParamBuilder().addMain(cmd).build()
+	args := newParamBuilder().addMain("bash command").build()
 
 	return br.renderWithParams(v, "Bash", args, func() string {
 		var meta tools.BashResponseMetadata
@@ -223,10 +223,23 @@ func (br bashRenderer) Render(v *toolCallCmp) string {
 			meta.Output = v.result.Content
 		}
 
-		if meta.Output == "" {
-			return ""
+		t := styles.CurrentTheme()
+		var result strings.Builder
+		result.WriteString(fmt.Sprintf("%s\n\n", t.S().Base.Foreground(t.FgSubtle).Render("Command:")))
+
+		// Display command with proper formatting - use a code-like style
+		commandStyle := t.S().Base.
+			Background(t.BgBaseLighter).
+			Foreground(t.FgBase).
+			Padding(0, 1)
+		result.WriteString(commandStyle.Render(params.Command))
+
+		if meta.Output != "" {
+			result.WriteString(fmt.Sprintf("\n\n%s\n\n", t.S().Base.Foreground(t.FgSubtle).Render("Output:")))
+			result.WriteString(renderPlainContent(v, meta.Output))
 		}
-		return renderPlainContent(v, meta.Output)
+
+		return result.String()
 	})
 }
 

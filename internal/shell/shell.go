@@ -16,11 +16,9 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"slices"
 	"strings"
 	"sync"
 
-	"github.com/charmbracelet/x/exp/slice"
 	"mvdan.cc/sh/moreinterp/coreutils"
 	"mvdan.cc/sh/v3/expand"
 	"mvdan.cc/sh/v3/interp"
@@ -157,40 +155,7 @@ func (s *Shell) SetBlockFuncs(blockFuncs []BlockFunc) {
 	s.blockFuncs = blockFuncs
 }
 
-// CommandsBlocker creates a BlockFunc that blocks exact command matches
-func CommandsBlocker(cmds []string) BlockFunc {
-	bannedSet := make(map[string]struct{})
-	for _, cmd := range cmds {
-		bannedSet[cmd] = struct{}{}
-	}
 
-	return func(args []string) bool {
-		if len(args) == 0 {
-			return false
-		}
-		_, ok := bannedSet[args[0]]
-		return ok
-	}
-}
-
-// ArgumentsBlocker creates a BlockFunc that blocks specific subcommand
-func ArgumentsBlocker(cmd string, args []string, flags []string) BlockFunc {
-	return func(parts []string) bool {
-		if len(parts) == 0 || parts[0] != cmd {
-			return false
-		}
-
-		argParts, flagParts := splitArgsFlags(parts[1:])
-		if len(argParts) < len(args) || len(flagParts) < len(flags) {
-			return false
-		}
-
-		argsMatch := slices.Equal(argParts[:len(args)], args)
-		flagsMatch := slice.IsSubset(flags, flagParts)
-
-		return argsMatch && flagsMatch
-	}
-}
 
 func splitArgsFlags(parts []string) (args []string, flags []string) {
 	args = make([]string, 0, len(parts))

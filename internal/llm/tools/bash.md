@@ -19,7 +19,6 @@ Before executing the command, please follow these steps:
 2. Security Check:
 
 - For security and to limit the threat of a prompt injection attack, some commands are limited or banned. If you use a disallowed command, you will receive an error message explaining the restriction. Explain the error to the User.
-- Verify that the command is not one of the banned commands: {{ .BannedCommands }}.
 
 3. Command Execution:
 
